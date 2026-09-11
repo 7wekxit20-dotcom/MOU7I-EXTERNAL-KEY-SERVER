@@ -239,15 +239,20 @@ def cors(resp):
     resp.headers['Access-Control-Allow-Methods'] = 'GET, POST, OPTIONS'
     return resp
 
-if __name__ == '__main__':
+# Ensure DB exists on import (needed for gunicorn on Render)
+with app.app_context():
     init_db()
-    # ensure legacy OGIOS key exists for testing
-    db = sqlite3.connect(DATABASE)
-    if not db.execute("SELECT 1 FROM keys WHERE key='OGIOS'").fetchone():
-        db.execute("INSERT INTO keys(key,created_at,expires_at,revoked,max_uses,note) VALUES(?,?,?,?,?,?)",
-                   ('OGIOS', now_iso(), None, 0, 0, 'legacy hardcoded key'))
-        db.commit()
-    db.close()
+    try:
+        db = sqlite3.connect(DATABASE)
+        if not db.execute("SELECT 1 FROM keys WHERE key='OGIOS'").fetchone():
+            db.execute("INSERT INTO keys(key,created_at,expires_at,revoked,max_uses,note) VALUES(?,?,?,?,?,?)",
+                       ('OGIOS', now_iso(), None, 0, 0, 'legacy hardcoded key'))
+            db.commit()
+        db.close()
+    except Exception as e:
+        print(f"DB init warn: {e}")
+
+if __name__ == '__main__':
     print(f"OGIOS Key Server running - ADMIN_KEY={ADMIN_KEY[:4]}*** database={DATABASE}")
     print("Web UI: http://0.0.0.0:5000/  API verify: POST /api/verify {\"key\":\"OGIOS\"}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)), debug=False)
