@@ -12,7 +12,7 @@ Endpoints:
 
 DB: keys.db SQLite with table keys(key TEXT PRIMARY KEY, created_at TEXT, expires_at TEXT, revoked INT, hwid TEXT, uses INT, max_uses INT)
 
-Admin auth: Bearer token or X-Admin-Key header. Default admin key from ADMIN_KEY env else "MOU7IONTOP"
+Admin auth: Bearer token or X-Admin-Key header. Default admin key from ADMIN_KEY env else "CHANGE-ME"
 
 Run: pip install flask && python app.py  (listens 0.0.0.0:5000)
 """
@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, g, redirect, url_for, session
 
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "MOU7IONTOP")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "CHANGE-ME")
 DATABASE = os.environ.get("DATABASE", "keys.db")
 SECRET = os.environ.get("FLASK_SECRET", secrets.token_hex(16))
 
@@ -121,7 +121,7 @@ def logout():
 
 @app.route('/api/health')
 def health():
-    return jsonify({"status":"ok","time":now_iso(),"admin_configured": ADMIN_KEY != "MOU7IONTOP"})
+    return jsonify({"status":"ok","time":now_iso(),"admin_configured": ADMIN_KEY != "CHANGE-ME"})
 
 # --- MOU7I EXTERNAL app uses this ---
 @app.route('/api/verify', methods=['POST','GET'])
