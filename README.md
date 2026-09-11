@@ -1,6 +1,6 @@
-# OGIOS Key Server
+# MOU7I EXTERNAL Key Server
 
-Simple Flask + SQLite key system for OGIOS app.
+Simple Flask + SQLite key system for MOU7I EXTERNAL app.
 
 ## Run locally (Kali)
 ```bash
@@ -11,8 +11,8 @@ ADMIN_KEY="YourSecret123" python app.py
 ```
 
 ## API
-- `POST /api/verify` `{"key":"OGIOS-XXXX-XXXX-XXXX"}` -> `{"valid":true}` used by iOS app
-- `POST /api/generate` header `X-Admin-Key: ADMIN_KEY` body `{"count":5,"days":30,"prefix":"OGIOS","max_uses":1}`
+- `POST /api/verify` `{"key":"MOU7I-XXXX-XXXX-XXXX"}` -> `{"valid":true}` used by iOS app
+- `POST /api/generate` header `X-Admin-Key: ADMIN_KEY` body `{"count":5,"days":30,"prefix":"MOU7I","max_uses":1}`
 - `GET /api/keys` list, `POST /api/revoke` `{"key":"..."}`
 - `GET /api/health` public
 
@@ -35,7 +35,7 @@ docker build -t ogios-keys . && docker run -d -p 5000:5000 -e ADMIN_KEY=YourSecr
 # nginx reverse proxy -> https
 ```
 
-## Connect OGIOS app
+## Connect MOU7I EXTERNAL app
 Edit `ThreeOneOSFive/helpers/LicenseManager.swift:7` or replace `activate` with API code (see patch below). Then `./build_unsigned.sh` and push to GitHub Action.
 
-Legacy key `OGIOS` is auto-created for testing.
+Legacy key `MOU7I` is auto-created for testing.

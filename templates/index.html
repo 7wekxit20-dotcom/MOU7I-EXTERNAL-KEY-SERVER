@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>OGIOS Key Server</title>
+<title>MOU7I EXTERNAL Key Server</title>
 <style>
 *{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial}
 body{margin:0;background:#0b0b0e;color:#fff}
@@ -29,14 +29,14 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f0f12;border:1px soli
 .small{font-size:11px;color:#9aa0a6}
 </style></head><body>
 <header>
-<h1>OGIOS Key Server <span class="small">/ admin</span></h1>
+<h1>MOU7I EXTERNAL Key Server <span class="small">/ admin</span></h1>
 <div><code id="api">/api/verify</code> <a href="/logout" style="margin-left:12px">Logout</a></div>
 </header>
 <div class="wrap">
 <div class="grid">
 <div class="card">
 <h2>Generate keys</h2>
-<label>Prefix</label><input id="prefix" value="OGIOS">
+<label>Prefix</label><input id="prefix" value="MOU7I EXTERNAL">
 <label>Count (1-100)</label><input id="count" type="number" value="1" min="1" max="100">
 <label>Expiry days (0 = never)</label><input id="days" type="number" value="30">
 <label>Max uses (0 = unlimited)</label><input id="maxuses" type="number" value="1">
@@ -44,9 +44,9 @@ pre{white-space:pre-wrap;word-break:break-all;background:#0f0f12;border:1px soli
 <div class="row" style="margin-top:14px"><button onclick="generate()">Generate</button><button class="sec" onclick="load()">Refresh list</button></div>
 <div id="genout" style="margin-top:12px"></div>
 <div class="card" style="margin-top:16px;background:#0f0f12">
-<h2 style="font-size:13px">API for OGIOS app</h2>
+<h2 style="font-size:13px">API for MOU7I EXTERNAL app</h2>
 <pre>POST /api/verify
-Body: {"key":"OGIOS-XXXX-XXXX-XXXX"}
+Body: {"key":"MOU7I EXTERNAL-XXXX-XXXX-XXXX"}
 Resp: {"valid":true,"reason":"ok"}
 
 Header: Content-Type: application/json

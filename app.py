@@ -1,18 +1,18 @@
 #!/usr/bin/env python3
 """
-OGIOS Key Server - Flask + SQLite
+MOU7I EXTERNAL Key Server - Flask + SQLite
 Endpoints:
   GET  /              -> web UI
   GET  /api/health    -> {status: ok}
   POST /api/generate  -> {key, expires_at} (admin auth)
-  POST /api/verify    -> {valid: bool, reason}  (used by OGIOS app)
+  POST /api/verify    -> {valid: bool, reason}  (used by MOU7I EXTERNAL app)
   GET  /api/keys      -> list keys (admin)
   POST /api/revoke    -> revoke key (admin)
   POST /api/login     -> admin login
 
 DB: keys.db SQLite with table keys(key TEXT PRIMARY KEY, created_at TEXT, expires_at TEXT, revoked INT, hwid TEXT, uses INT, max_uses INT)
 
-Admin auth: Bearer token or X-Admin-Key header. Default admin key from ADMIN_KEY env else "CHANGE-ME"
+Admin auth: Bearer token or X-Admin-Key header. Default admin key from ADMIN_KEY env else "MOU7IONTOP"
 
 Run: pip install flask && python app.py  (listens 0.0.0.0:5000)
 """
@@ -21,7 +21,7 @@ from datetime import datetime, timedelta, timezone
 from functools import wraps
 from flask import Flask, request, jsonify, render_template, g, redirect, url_for, session
 
-ADMIN_KEY = os.environ.get("ADMIN_KEY", "CHANGE-ME")
+ADMIN_KEY = os.environ.get("ADMIN_KEY", "MOU7IONTOP")
 DATABASE = os.environ.get("DATABASE", "keys.db")
 SECRET = os.environ.get("FLASK_SECRET", secrets.token_hex(16))
 
@@ -81,9 +81,9 @@ def require_admin(f):
         return f(*args, **kwargs)
     return wrapper
 
-def gen_key(prefix="OGIOS", length=16):
+def gen_key(prefix="MOU7I", length=16):
     alphabet = string.ascii_uppercase + string.digits
-    # eg OGIOS-XXXX-XXXX-XXXX
+    # eg MOU7I-XXXX-XXXX-XXXX
     parts = []
     for _ in range(3):
         parts.append(''.join(secrets.choice(alphabet) for _ in range(4)))
@@ -121,9 +121,9 @@ def logout():
 
 @app.route('/api/health')
 def health():
-    return jsonify({"status":"ok","time":now_iso(),"admin_configured": ADMIN_KEY != "CHANGE-ME"})
+    return jsonify({"status":"ok","time":now_iso(),"admin_configured": ADMIN_KEY != "MOU7IONTOP"})
 
-# --- OGIOS app uses this ---
+# --- MOU7I EXTERNAL app uses this ---
 @app.route('/api/verify', methods=['POST','GET'])
 def verify():
     # support both JSON body and query param ?key=
@@ -169,7 +169,7 @@ def generate():
         count = int(data.get('count',1))
     except: count = 1
     count = max(1, min(count, 100))
-    prefix = (data.get('prefix') or "OGIOS").strip().upper()[:12]
+    prefix = (data.get('prefix') or "MOU7I").strip().upper()[:12]
     days = data.get('days')
     try:
         days = int(days) if days not in (None,"") else 0
@@ -244,15 +244,15 @@ with app.app_context():
     init_db()
     try:
         db = sqlite3.connect(DATABASE)
-        if not db.execute("SELECT 1 FROM keys WHERE key='OGIOS'").fetchone():
+        if not db.execute("SELECT 1 FROM keys WHERE key='MOU7I'").fetchone():
             db.execute("INSERT INTO keys(key,created_at,expires_at,revoked,max_uses,note) VALUES(?,?,?,?,?,?)",
-                       ('OGIOS', now_iso(), None, 0, 0, 'legacy hardcoded key'))
+                       ('MOU7I', now_iso(), None, 0, 0, 'legacy hardcoded key'))
             db.commit()
         db.close()
     except Exception as e:
         print(f"DB init warn: {e}")
 
 if __name__ == '__main__':
-    print(f"OGIOS Key Server running - ADMIN_KEY={ADMIN_KEY[:4]}*** database={DATABASE}")
-    print("Web UI: http://0.0.0.0:5000/  API verify: POST /api/verify {\"key\":\"OGIOS\"}")
+    print(f"MOU7I EXTERNAL Key Server running - ADMIN_KEY={ADMIN_KEY[:4]}*** database={DATABASE}")
+    print("Web UI: http://0.0.0.0:5000/  API verify: POST /api/verify {\"key\":\"MOU7I\"}")
     app.run(host='0.0.0.0', port=int(os.environ.get('PORT',5000)), debug=False)
