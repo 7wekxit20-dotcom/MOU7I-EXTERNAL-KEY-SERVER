@@ -1,0 +1,113 @@
+<!doctype html>
+<html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OGIOS Key Server</title>
+<style>
+*{box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Helvetica,Arial}
+body{margin:0;background:#0b0b0e;color:#fff}
+header{padding:18px 22px;border-bottom:1px solid #1f1f25;display:flex;justify-content:space-between;align-items:center;background:#101014;position:sticky;top:0}
+header h1{margin:0;font-size:18px;letter-spacing:.6px}
+header a{color:#9aa0a6;text-decoration:none;font-size:13px}
+.wrap{max-width:1100px;margin:0 auto;padding:22px}
+.grid{display:grid;grid-template-columns:360px 1fr;gap:18px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}}
+.card{background:#15151a;border:1px solid #1f1f25;border-radius:16px;padding:18px}
+h2{margin:0 0 10px;font-size:15px}
+label{font-size:12px;color:#9aa0a6;display:block;margin:10px 0 6px}
+input,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #2a2a31;background:#0f0f12;color:#fff;outline:none}
+button{padding:10px 14px;border-radius:10px;border:none;background:#6c5cff;color:#fff;font-weight:700;cursor:pointer}
+button.sec{background:#23232a}
+.row{display:flex;gap:10px;align-items:center}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th,td{padding:10px 8px;border-bottom:1px solid #1f1f25;text-align:left}
+th{color:#9aa0a6;font-size:11px;letter-spacing:.5px;text-transform:uppercase}
+.badge{padding:3px 8px;border-radius:999px;font-size:11px;font-weight:700}
+.ok{background:#12331a;color:#6cf0a0;border:1px solid #1e5a2e}
+.rev{background:#331218;color:#ff8a8a;border:1px solid #5a1f24}
+code{font-family:monospace;background:#0f0f12;border:1px solid #2a2a31;padding:2px 6px;border-radius:6px}
+pre{white-space:pre-wrap;word-break:break-all;background:#0f0f12;border:1px solid #2a2a31;padding:12px;border-radius:12px;font-size:12px}
+.small{font-size:11px;color:#9aa0a6}
+</style></head><body>
+<header>
+<h1>OGIOS Key Server <span class="small">/ admin</span></h1>
+<div><code id="api">/api/verify</code> <a href="/logout" style="margin-left:12px">Logout</a></div>
+</header>
+<div class="wrap">
+<div class="grid">
+<div class="card">
+<h2>Generate keys</h2>
+<label>Prefix</label><input id="prefix" value="OGIOS">
+<label>Count (1-100)</label><input id="count" type="number" value="1" min="1" max="100">
+<label>Expiry days (0 = never)</label><input id="days" type="number" value="30">
+<label>Max uses (0 = unlimited)</label><input id="maxuses" type="number" value="1">
+<label>Note</label><input id="note" placeholder="e.g. for @client">
+<div class="row" style="margin-top:14px"><button onclick="generate()">Generate</button><button class="sec" onclick="load()">Refresh list</button></div>
+<div id="genout" style="margin-top:12px"></div>
+<div class="card" style="margin-top:16px;background:#0f0f12">
+<h2 style="font-size:13px">API for OGIOS app</h2>
+<pre>POST /api/verify
+Body: {"key":"OGIOS-XXXX-XXXX-XXXX"}
+Resp: {"valid":true,"reason":"ok"}
+
+Header: Content-Type: application/json
+CORS: *</pre>
+<p class="small">Set app's LicenseManager URL to <code id="host"></code>/api/verify</p>
+</div>
+</div>
+<div class="card">
+<h2>Keys <span id="cnt" class="small"></span></h2>
+<div class="row" style="margin-bottom:10px"><input id="q" placeholder="Filter key..." oninput="filter()"><button class="sec" onclick="load()">Load</button></div>
+<div style="overflow:auto;max-height:62vh">
+<table><thead><tr><th>Key</th><th>Created</th><th>Expires</th><th>Uses</th><th>Status</th><th>Action</th></tr></thead><tbody id="tbody"></tbody></table>
+</div>
+</div>
+</div>
+</div>
+<script>
+const host = location.origin;
+document.getElementById('host').textContent = host;
+document.getElementById('api').textContent = host + '/api/verify';
+let all=[];
+async function api(path, opts={}){
+  opts.headers = opts.headers||{};
+  // session cookie auth works for browser, no need for X-Admin-Key
+  if(opts.body && typeof opts.body!=='string') opts.body = JSON.stringify(opts.body);
+  if(opts.body) opts.headers['Content-Type']='application/json';
+  const r = await fetch(path, opts);
+  const j = await r.json().catch(()=>({}));
+  if(!r.ok) throw j;
+  return j;
+}
+async function generate(){
+  const out=document.getElementById('genout'); out.textContent='...';
+  try{
+    const j = await api('/api/generate',{method:'POST', body:{prefix:val('prefix'), count:parseInt(val('count')), days:parseInt(val('days')), max_uses:parseInt(val('maxuses')), note:val('note')}});
+    out.innerHTML = '<pre>'+ JSON.stringify(j,null,2)+'</pre>' + j.keys.map(k=>'<div style=\"margin:6px 0\"><code>'+k.key+'</code> <button onclick=\"copy(\''+k.key+'\')\">Copy</button></div>').join('');
+    load();
+  }catch(e){ out.innerHTML='<pre>'+JSON.stringify(e,null,2)+'</pre>'; }
+}
+async function load(){
+  try{
+    const j = await api('/api/keys');
+    all=j.keys; document.getElementById('cnt').textContent='('+j.count+')';
+    render(all);
+  }catch(e){ document.getElementById('tbody').innerHTML='<tr><td colspan=6><pre>'+JSON.stringify(e,null,2)+'</pre></td></tr>'; }
+}
+function render(list){
+  const tb=document.getElementById('tbody'); tb.innerHTML='';
+  list.forEach(r=>{
+    const tr=document.createElement('tr');
+    const exp = r.expires_at ? new Date(r.expires_at).toLocaleDateString() : 'never';
+    const status = r.revoked ? '<span class=rev>revoked</span>' : (r.expires_at && new Date(r.expires_at)<new Date() ? '<span class=rev>expired</span>' : '<span class=ok>active</span>');
+    tr.innerHTML = `<td><code>${r.key}</code> <a href="#" onclick="copy('${r.key}');return false" style="font-size:11px">copy</a><div class=small>${r.note||''}</div></td><td class=small>${new Date(r.created_at).toLocaleDateString()}</td><td class=small>${exp}</td><td>${r.uses}/${r.max_uses||'∞'}</td><td>${status}</td><td><button class=sec onclick="revoke('${r.key}')">${r.revoked?'':'revoke'}</button> <button class=sec onclick="del('${r.key}')">delete</button></td>`;
+    tb.appendChild(tr);
+  });
+}
+function val(id){ return document.getElementById(id).value; }
+function copy(t){ navigator.clipboard.writeText(t); }
+async function revoke(k){ if(!confirm('Revoke '+k+' ?'))return; await api('/api/revoke',{method:'POST', body:{key:k}}); load(); }
+async function del(k){ if(!confirm('Delete '+k+' ?'))return; await api('/api/delete',{method:'POST', body:{key:k}}); load(); }
+function filter(){ const q=document.getElementById('q').value.toLowerCase(); render(all.filter(r=> r.key.toLowerCase().includes(q) || (r.note||'').toLowerCase().includes(q))); }
+load();
+</script>
+</body></html>
